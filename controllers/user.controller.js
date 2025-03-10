@@ -5,30 +5,27 @@ import dotenv from "dotenv";
 import { sendemailverification } from "../middlewares/Email.js";
 dotenv.config();
 
+
 export const registerUser = async (req, res) => {
-    const { fullname, email, location, gender, age, password } = req.body;
+    const { fullname, email, location, gender, age, password, role } = req.body;
 
     try {
-      
-        const user = await User.findOne({ email });
-        if (user) {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
         }
-
 
         const adminEmail = process.env.ADMIN_EMAIL;
         const adminPassword = process.env.ADMIN_PASSWORD;
 
         if (email === adminEmail && password === adminPassword) {
-            console.log(adminEmail)
-
             const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
 
             const admin = new User({
+                fullname: "Admin",
                 email: adminEmail,
                 password: hashedAdminPassword,
                 location: "chandni chowk",
-                fullname: "Admin",
                 gender: "male",
                 age: 22,
                 role: "admin",
@@ -37,27 +34,35 @@ export const registerUser = async (req, res) => {
 
             await admin.save();
             return res.status(201).json({ message: "Admin user registered successfully", user: admin });
-
         }
 
-
         const hashedPassword = await bcrypt.hash(password, 10);
-        const verificationcode = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1d" });
+        const verificationCode = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
-        console.log("verificationcode:", verificationcode);
+        console.log("Verification Code:", verificationCode);
+
+        const validRoles = ["visitor", "organizer", "player"];
+        if (!validRoles.includes(role)) {
+            return res.status(400).json({ message: "Invalid role" });
+        }
+
+        // Create new user
         const newUser = new User({
             fullname,
             email,
             location,
             gender,
             age,
-            password: hashedPassword
+            password: hashedPassword,
+            role,
+            isVerified: false 
         });
 
         await newUser.save();
+
+        await sendemailverification(email, verificationCode);
+
         res.status(201).json({ message: "User registered successfully", user: newUser });
-        await sendemailverification(email, verificationcode)
-        res.json({ msg: "User registered successfully", user: newUser })
 
     } catch (error) {
         console.error("Error while registering user:", error);
@@ -92,30 +97,67 @@ export const verifyEmail = async (req, res) => {
 
 export const loginUser = async (req, res) => {
     const { email, password } = req.body;
+
     try {
-        const user= await User.findOne({email:email});
-        if(!user){
-            return res.status(400).json({message:"User does not exist"});
+        const user = await User.findOne({ email:email});
+        if (!user) {
+            return res.status(400).json({ message: "User does not exist" });
         }
-        if(!user.isVerified){
-            return res.status(400).json({message:"Email not verified"});
+
+        if (!user.isVerified) {
+            return res.status(400).json({ message: "Email not verified" });
         }
+
         const isMatch = await bcrypt.compare(password, user.password);
-        if(!isMatch){
-            return res.status(400).json({message:"Invalid credentials"});
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
         }
+
+        // Generate JWT token
         const token = jwt.sign(
             { id: user._id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
-        await User.findByIdAndUpdate(user._id, {token}, {new:true});
-        res.json({message:"User logged in successfully", token});
+
+        // Save token to database (optional)
+        await User.findByIdAndUpdate(user._id, { token }, { new: true });
+
+        // Determine redirection path based on role
+        let redirectPath = "/";
+        switch (user.role) {
+            case "admin":
+                redirectPath = "/admin/dashboard";
+                break;
+            case "organizer":
+                redirectPath = "/organizer/dashboard";
+                break;
+            case "player":
+                redirectPath = "/player/home";
+                break;
+            case "visitor":
+                redirectPath = "/visitor/home";
+                break;
+        }
+
+        // Send response
+        res.json({
+            message: "User logged in successfully",
+            token,
+            user: {
+                id: user._id,
+                fullname: user.fullname,
+                email: user.email,
+                role: user.role,
+            },
+            redirect: redirectPath, // Frontend will use this to navigate
+        });
+
     } catch (error) {
         console.error("Error while logging in user:", error);
         res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
 
 export const logoutUser = async (req, res) => {
