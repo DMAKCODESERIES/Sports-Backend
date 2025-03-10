@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         lowercase: true,
         trim: true,
-        enum: ["user", "admin"]
+        enum: ["visitor","organizer","player","admin"]
     },
     isVerified: {
         type: Boolean,
