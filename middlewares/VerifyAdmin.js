@@ -8,22 +8,15 @@ export default async function VerifyAdmin(req, res, next) {
         if (!token) {
             return res.status(401).json({ message: "Access Denied: No Token Provided" });
         }
-
-       
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        
         const user = await User.findById(decoded.id);
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-
-     
         if (user.role !== "admin") {
             return res.status(403).json({ message: "Access Denied: Admins Only" });
         }
-
         // Pass user details to the next middleware
         req.user = user;
         next();

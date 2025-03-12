@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-
-export const authenticateUser = (req, res, next) => {
+import User from '../models/user.model.js'
+export const authenticateUser = async(req, res, next) => {
     // Extract token from headers
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
@@ -10,6 +10,7 @@ export const authenticateUser = (req, res, next) => {
     try {
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
         req.user = decoded; // Attach user info to request object
         next();
     } catch (error) {

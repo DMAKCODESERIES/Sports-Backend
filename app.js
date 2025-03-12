@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import userroutes from "./routers/user.routes.js"
 import adminroutes from "./routers/admin.routes.js"
-
+import eventroutes from "./routers/event.routes.js"
 
 dotenv.config();
 const app=express()
@@ -19,4 +19,6 @@ app.use(cookieParser())
 
 app.use("/user",userroutes)
 app.use("/admin",adminroutes)
+app.use("/event",eventroutes)
+
 export default app

@@ -1,29 +1,15 @@
-// import { getUserProfile, loginUser, logoutUser, registerUser, verifyEmail } from "../controllers/user.controller.js";
-// import express from "express";
-
-
-// const router = express.Router();
-
-
-
-// router.post("/register", registerUser);
-// router.get("/verify-email/:verificationcode", verifyEmail)
-// router.post("/login", loginUser)
-// router.post("/logout/:id", logoutUser)
-// router.get("/getProfile/:id", getUserProfile)
-
-
-// export default router; 
 import express from "express";
-import { 
-    getUserProfile, 
-    loginUser, 
-    logoutUser, 
-    registerUser, 
-    verifyEmail 
+import {
+    getUserProfile,
+    loginUser,
+    logoutUser,
+    registerUser,
+    uploadImage,
+    verifyEmail
 } from "../controllers/user.controller.js";
+import { authenticateUser, authorizeRole } from "../middlewares/auth.middleware.js";
+import { upload } from '../middlewares/multer.middleware.js'
 
-import { authenticateUser, authorizeRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -31,8 +17,8 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.get("/verify-email/:verificationcode", verifyEmail);
 router.post("/login", loginUser);
-
 // Protected Routes (Requires Login)
+router.put('/uploadImage/:id', authenticateUser, upload.single('image'), uploadImage);
 router.post("/logout/:id", authenticateUser, logoutUser);
 router.get("/getProfile/:id", authenticateUser, getUserProfile);
 

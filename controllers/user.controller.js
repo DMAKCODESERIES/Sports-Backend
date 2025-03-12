@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { sendemailverification } from "../middlewares/Email.js";
 dotenv.config();
-
+import { CloudinaryUpload } from "../service/Clodinary.upload.js";
 
 export const registerUser = async (req, res) => {
     const { fullname, email, location, gender, age, password, role } = req.body;
@@ -22,18 +22,18 @@ export const registerUser = async (req, res) => {
             const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
 
             const admin = new User({
-                fullname: "Admin",
+                fullname: "Super Admin",
                 email: adminEmail,
                 password: hashedAdminPassword,
                 location: "chandni chowk",
                 gender: "male",
                 age: 22,
-                role: "admin",
+                role: "superadmin",
                 isVerified: true
             });
 
             await admin.save();
-            return res.status(201).json({ message: "Admin user registered successfully", user: admin });
+            return res.status(201).json({ message: "Admin user registered successfully", user: admin }) 
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -57,12 +57,13 @@ export const registerUser = async (req, res) => {
             role,
             isVerified: false 
         });
-
-        await newUser.save();
+     
+        await newUser.save(); 
 
         await sendemailverification(email, verificationCode);
 
         res.status(201).json({ message: "User registered successfully", user: newUser });
+        
 
     } catch (error) {
         console.error("Error while registering user:", error);
@@ -83,7 +84,7 @@ export const verifyEmail = async (req, res) => {
         }
 
         user.isVerified = true;
-        user.verificationcode = null; 
+        user.verificationcode = null;
         await user.save();
 
         res.json({ msg: "Email verified successfully. You can now log in." });
@@ -99,7 +100,7 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await User.findOne({ email:email});
+        const user = await User.findOne({ email: email });
         if (!user) {
             return res.status(400).json({ message: "User does not exist" });
         }
@@ -163,16 +164,17 @@ export const loginUser = async (req, res) => {
 export const logoutUser = async (req, res) => {
     const { id } = req.params;
     try {
-         const user = await User.findById(id);
-                if (!user) {
-                    return res.status(404).json({ msg: "User not found" });
-                }
-        await User.findByIdAndUpdate(id, {token:null}, {new:true});
-        res.json({message:"User logged out successfully"});}
-         catch (error) 
-         {
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ msg: "User not found" });
+        }
+        await User.findByIdAndUpdate(id, { token: null }, { new: true });
+        res.json({ message: "User logged out successfully" });
+    }
+    catch (error) {
         console.error("Error while logging out user:", error);
-}} 
+    }
+}
 
 export const getUserProfile = async (req, res) => {
     const { id } = req.params;
@@ -185,6 +187,28 @@ export const getUserProfile = async (req, res) => {
     catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error" });
-    }}
+    }
+}
 
-    
+
+
+export const uploadImage = async (req, res) => {
+    const { id } = req.params;
+    console.log(id)
+    const imageLocalPath = req.file ? req.file.path : null;
+    console.log(imageLocalPath)
+    try {
+        if (!imageLocalPath) {
+            return res.status(400).json({ msg: "Please upload an image" });
+        }
+        const image = await CloudinaryUpload(imageLocalPath);
+        const user = await User.findById(req.params.id);
+        user.image = image.url;
+        await user.save();
+        res.json({ msg: "Image uploaded successfully", user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: "Server error" });
+
+    }
+}
