@@ -1,10 +1,12 @@
 import express from 'express';
-import { createEvent }  from '../controllers/event.controller.js';
+import { assignTeams, createEvent, registerForEvent }  from '../controllers/event.controller.js';
 
 const router = express.Router();
 
 
 router.post('/createEvent', createEvent);
+router.post('/registerForEvent/:id', registerForEvent);
+router.post('/assignTeams/:id', assignTeams);
 
 
 

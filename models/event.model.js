@@ -30,7 +30,16 @@ const eventSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     },
-    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    participants: [
+        {
+            user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+            paymentStatus: { type: String, enum: ["pending", "paid"], default: "pending" }
+        }
+    ],
+    teams: [{
+        name: String,
+        players: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+    }],
     maxParticipants: {
         type: Number,
         required: true
