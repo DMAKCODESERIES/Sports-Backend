@@ -93,4 +93,73 @@ res.json(event)
 }
 }
 
+////all events past events upcoming events
+export const events=async(req,res)=>{
+    try {
+         const events = await Event.find();
+        if (!events || events.length === 0) {
+            return res.status(404).json({ message: "No events found" });
+        }
+        res.json(events);
+    } catch (error) {
+         console.log("error in fetching  events ", error)
+    }
+}
+export const pastEvents=async(req,res)=>{
+    try {
+        const events = await Event.find({isFinished:true});
+        if (!events || events.length === 0) {
+            return res.status(404).json({ message: "No finished events found" });
+        }
+        res.json(events);
+    } catch (error) {
+        console.log("error in fetching past events ", error)
+    }
+}
+export const upComingEvents = async (req, res) => {
+    try {
+        const events = await Event.find({ isFinished: false });
+        if (!events || events.length === 0) {
+            return res.status(404).json({ message: "No finished events found" });
+        }
+        res.json(events);
+    } catch (error) {
+        console.log("error in fetching past events ", error)
+    }
+}
+
+export const finishEvents = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const event = await Event.findById(id);
+        if (!event) {
+            return res.status(404).json({ message: "Event not found" });
+        }
+
+        event.isFinished = true;
+        await event.save();
+
+        res.json({ message: "Event successfully finished", event });
+    } catch (error) {
+        console.log("Error while finishing an event:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+export const deleteEvent = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const event = await Event.findById(id);
+        if (!event) {
+            return res.status(404).json({ message: "Event not found" });
+        }
+        await Event.findByIdAndDelete(id);
+        res.json({ message: "Event deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
 
