@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    image: {type: String},
+    image: { type: String },
     bio: { type: String },
     sportPreferences: [String],
     ratings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Rating" }],
