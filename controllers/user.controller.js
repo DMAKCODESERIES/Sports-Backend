@@ -41,10 +41,7 @@ export const registerUser = async (req, res) => {
 
         console.log("Verification Code:", verificationCode);
 
-        const validRoles = ["visitor", "organizer", "player"];
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({ message: "Invalid role" });
-        }
+      
 
         // Create new user
         const newUser = new User({
