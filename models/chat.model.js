@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const chatShema = new mongoose.Schema({
-   //// sender and reseiver
+   //// sender and receiver
    members:{
     type:[
     {    type:mongoose.Schema.Types.ObjectId,
